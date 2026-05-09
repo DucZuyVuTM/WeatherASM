@@ -106,6 +106,7 @@ export const checkAuth = createAsyncThunk('auth/checkAuth', async () => {
         throw refreshError;
       }
     }
+    console.log(error)
     throw error;
   }
 });

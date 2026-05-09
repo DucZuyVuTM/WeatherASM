@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Layout } from './shared/ui/Layout';
@@ -11,7 +11,7 @@ import { Analysis } from './pages/analysis/Analysis';
 import { Compare } from './pages/compare/Compare';
 import { Profile } from './pages/profile/Profile';
 import { AppDispatch, RootState } from './app/store';
-import { checkAuth } from './features/auth/authSlice';
+import { logout, checkAuth } from './features/auth/authSlice';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useSelector((state: RootState) => state.auth);
@@ -25,10 +25,42 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
+  const [initialized, setInitialized] = useState(false);
   
   useEffect(() => {
-    dispatch(checkAuth());
+    const initAuth = async () => {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        await dispatch(checkAuth());
+      }
+      setInitialized(true);
+    };
+    
+    initAuth();
   }, [dispatch]);
+
+  useEffect(() => {
+    const handleLogout = () => {
+      dispatch(logout());
+    };
+
+    window.addEventListener('auth:logout', handleLogout);
+
+    return () => {
+      window.removeEventListener('auth:logout', handleLogout);
+    };
+  }, [dispatch]);
+
+  if (!initialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Routes>
